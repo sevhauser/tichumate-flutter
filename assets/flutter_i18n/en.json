@@ -1,0 +1,119 @@
+{
+  "app": {
+    "title": "TichuMate"
+  },
+  "ui": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "delete_target": "Delete {target}",
+    "edit": "Edit",
+    "edit_target": "Edit {target}",
+    "back": "Back",
+    "next": "Next",
+    "this_cannot_be_undone": "This cannot be undone!",
+    "ok": "OK",
+    "value": "Value",
+    "yes": "Yes",
+    "errors": {
+      "missing_input": "Missing Input",
+      "full_numbers_only": "Please use only full numbers as value",
+      "provide_name": "Please provide a name",
+      "provide_value": "Please provide a value"
+    }
+  },
+  "player": {
+    "player": "Player",
+    "players": "Players",
+    "player_name": "Player Name",
+    "new_player": "New Player",
+    "edit_player": "Edit Player",
+    "no_players": "No Players",
+    "choose_player": "Choose Player",
+    "statistics": {
+      "played": "Played",
+      "won": "Won",
+      "lost": "Lost",
+      "double_win": "Double Win"
+    }
+  },
+  "game": {
+    "game": "Game",
+    "games": "Games",
+    "new_game": "New Game",
+    "delete_game": "Delete Game",
+    "start_game": "Start Game!",
+    "edit_game": "Edit Game",
+    "quit_new_game": "Cancel New Game?",
+    "rules": {
+      "rules": "Rules",
+      "win_condition": "Win Condition",
+      "score": "Score",
+      "difference": "Difference",
+      "points": "Points"
+    },
+    "statistics": {
+      "statistics": "Statistics",
+      "score_total": "Score Total",
+      "total": "Total",
+      "score": "Score",
+      "calls": "Tichus"
+    },
+    "score": {
+      "win_short": "W",
+      "double_win_short": "DW"
+    }
+  },
+  "round": {
+    "round": "Round",
+    "rounds": "Rounds",
+    "card_points": "Card Points",
+    "winner": "Winner",
+    "double": "Double",
+    "win": "Win",
+    "success": "Success",
+    "fail": "Fail",
+    "please_select_a_winner": "Please select a winner."
+  },
+  "team": {
+    "team": "Team",
+    "teams": "Teams",
+    "team_name": "Team Name"
+  },
+  "customize": {
+    "customize": "Customize"
+  },
+  "tichu": {
+    "lang": {
+      "tichu": {
+        "title": "Tichu",
+        "short": "T"
+      },
+      "grand": {
+        "title": "Grand Tichu",
+        "short": "G"
+      }
+    },
+    "tichu": "Tichu",
+    "tichus": "Tichus",
+    "grand_tichu": "Grand Tichu",
+    "new_tichu": "New Tichu",
+    "tichu_name": "Tichu Name",
+    "tichu_deleted": "Tichu has been deleted",
+    "x_points": "{x} Points",
+    "delete_tichu": "Delete Tichu",
+    "edit_tichu": "Edit Tichu"
+  },
+  "preferences": {
+    "preferences": "Preferences",
+    "feedback": "Feedback",
+    "feedback_text": "If you encounter a bug, or have other feedback:",
+    "theme": "Theme",
+    "default_theme": "Default",
+    "light_theme": "Light"
+  },
+  "about": {
+    "about_text": "TichuMate is made with Flutter by Severin Hauser. The source code for this app is available on GitHub (see link below).",
+    "version_x": "Version {version}"
+  }
+}
