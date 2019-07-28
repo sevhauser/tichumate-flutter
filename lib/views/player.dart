@@ -109,7 +109,7 @@ class _PlayerViewContentState extends State<_PlayerViewContent> {
                             label: FlutterI18n.translate(
                                     context, 'player.statistics.won')
                                 .toUpperCase(),
-                            value: _statistics.gamesPlayed.toString(),
+                            value: _statistics.gamesWon.toString(),
                             color: Colors.green[500]),
                         _DataRowItem(
                             label: FlutterI18n.translate(
