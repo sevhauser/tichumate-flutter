@@ -55,25 +55,35 @@ class PlayerDialog {
     return false;
   }
 
-  Future<Player> selectPlayer(List<Player> exclude) async {
+  Future<Player> selectPlayer(List<Player> exclude,
+      {List<Player> secondary}) async {
     var players = List<Player>.from(TichuDB().players.players);
     if (exclude != null) {
       players.removeWhere((player) => exclude.any((p) => p.id == player.id));
     }
-    var playerList = players
-        .map((player) => SimpleDialogOption(
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    child: Text(player.icon, style: TextStyle(fontSize: 16)),
-                    padding: EdgeInsets.only(right: 11, left: 1),
-                  ),
-                  Text(player.name)
-                ],
+    var playerList = players.map((player) {
+      bool _secondary =
+          secondary == null ? false : secondary.any((p) => p.id == player.id);
+      return SimpleDialogOption(
+        child: Row(
+          children: <Widget>[
+            Container(
+              child: Text(
+                player.icon,
+                style: TextStyle(
+                  fontSize: 16,
+                ),
               ),
-              onPressed: () => Navigator.of(context).pop(player),
-            ))
-        .toList();
+              padding: EdgeInsets.only(right: 11, left: 1),
+            ),
+            Text(player.name,
+                style: TextStyle(
+                    color: _secondary ? Colors.white30 : Colors.white))
+          ],
+        ),
+        onPressed: () => Navigator.of(context).pop(player),
+      );
+    }).toList();
     playerList.add(SimpleDialogOption(
       child: Row(
         children: <Widget>[
