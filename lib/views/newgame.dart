@@ -126,6 +126,7 @@ class _NewGameViewState extends State<NewGameView> {
                         playersCallback: (players) {
                           _team1.players = players;
                         },
+                        secondaryPlayers: _team2.players,
                       ),
                     ),
                     Step(
@@ -138,6 +139,7 @@ class _NewGameViewState extends State<NewGameView> {
                           teamNameCallback: (name) => _team2.name = name,
                           playersCallback: (players) =>
                               _team2.players = players,
+                          secondaryPlayers: _team1.players,
                         )),
                     Step(
                       isActive: _currentStep == 2,

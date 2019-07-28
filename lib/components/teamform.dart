@@ -8,6 +8,7 @@ class TeamForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final FormFieldSetter<String> teamNameCallback;
   final FormFieldSetter<List<Player>> playersCallback;
+  final List<Player> secondaryPlayers;
   final Team team;
 
   TeamForm(
@@ -15,6 +16,7 @@ class TeamForm extends StatelessWidget {
       @required this.team,
       @required this.teamNameCallback,
       @required this.playersCallback,
+      this.secondaryPlayers,
       Key key})
       : super(key: key);
 
@@ -34,11 +36,8 @@ class TeamForm extends StatelessWidget {
               context: context,
               initialValue: team.players,
               onSaved: playersCallback,
+              secondaryPlayers: secondaryPlayers,
             ),
-            // TeamPlayersSelect(
-            //   playersCallback: playersCallback,
-            //   selected: team.players,
-            // )
           ],
         ));
   }
@@ -53,6 +52,7 @@ class TeamPlayersSelect extends FormField<List<Player>> {
   TeamPlayersSelect({
     FormFieldSetter<List<Player>> onSaved,
     List<Player> initialValue,
+    List<Player> secondaryPlayers,
     @required BuildContext context,
   }) : super(
             onSaved: onSaved,
@@ -97,7 +97,8 @@ class TeamPlayersSelect extends FormField<List<Player>> {
                               icon: Icon(Icons.add_circle),
                               onPressed: () async {
                                 var result = await PlayerDialog(context)
-                                    .selectPlayer(state.value);
+                                    .selectPlayer(state.value,
+                                        secondary: secondaryPlayers);
                                 if (result is Player && result.id == null) {
                                   result =
                                       await PlayerDialog(context).newPlayer();
