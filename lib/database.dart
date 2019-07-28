@@ -372,6 +372,7 @@ abstract class TichuRepo<E extends TichuModel> {
 class PlayerRepository extends TichuRepo<Player> {
   final String table = TichuTable.player;
   List<Player> players = [];
+  int changeCount = 0;
 
   PlayerRepository(Database db, TichuDB repos) : super(db, repos);
 
@@ -385,6 +386,7 @@ class PlayerRepository extends TichuRepo<Player> {
 
   @override
   Future<void> onDataChange() async {
+    changeCount += 1;
     players = await getAll(orderBy: 'name ASC');
   }
 
@@ -435,11 +437,13 @@ class TichuRepository extends TichuRepo<Tichu> {
   final String table = TichuTable.tichu;
   List<Tichu> cachedAllTichus = [];
   List<Tichu> cachedTichus = [];
+  int changeCount = 0;
 
   TichuRepository(Database db, TichuDB repos) : super(db, repos);
 
   @override
   Future<void> onDataChange() async {
+    changeCount += 1;
     cachedAllTichus = await getAll(orderBy: 'protected DESC');
     cachedTichus = List<Tichu>.from(cachedAllTichus)
       ..removeWhere((tichu) => tichu.isDeleted);
@@ -564,6 +568,7 @@ class TeamRepository extends TichuRepo<Team> {
 class GameRepository extends TichuRepo<Game> {
   final String table = TichuTable.game;
   List<Game> cachedGames = [];
+  int changeCount = 0;
 
   GameRepository(Database db, TichuDB repos) : super(db, repos);
 
@@ -577,6 +582,7 @@ class GameRepository extends TichuRepo<Game> {
 
   @override
   Future<void> onDataChange() async {
+    changeCount += 1;
     cachedGames = await getAll(orderBy: 'created_on DESC');
   }
 
