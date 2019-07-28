@@ -9,6 +9,36 @@ import 'package:tichumate/dialogs/tichu.dart';
 import 'package:tichumate/models.dart';
 import 'package:tichumate/views/game.dart';
 
+class HomeData extends InheritedWidget {
+  final int playersChange, gamesChange, tichusChange;
+  final List<Player> players;
+  final List<Game> games;
+  final List<Tichu> tichus;
+
+  HomeData({
+    @required this.players,
+    @required this.games,
+    @required this.tichus,
+    @required this.playersChange,
+    @required this.gamesChange,
+    @required this.tichusChange,
+    @required Widget child,
+    Key key,
+  }) : super(child: child, key: key);
+
+  @override
+  bool updateShouldNotify(HomeData old) {
+    var result = (playersChange != old.playersChange ||
+        gamesChange != old.gamesChange ||
+        tichusChange != old.tichusChange);
+    return result;
+  }
+
+  static HomeData of(BuildContext context) {
+    return context.inheritFromWidgetOfExactType(HomeData) as HomeData;
+  }
+}
+
 class HomeView extends StatefulWidget {
   final int initialIndex;
   const HomeView({Key key, this.initialIndex: 1}) : super(key: key);
@@ -78,27 +108,33 @@ class _HomeViewState extends State<HomeView>
           controller: _tabController,
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: <Widget>[
-          _PlayersTab(),
-          _GamesTab(),
-          _CustomizeTab(),
-        ],
+      body: HomeData(
+        players: TichuDB().players.players,
+        playersChange: TichuDB().players.changeCount,
+        games: TichuDB().games.cachedGames,
+        gamesChange: TichuDB().games.changeCount,
+        tichus: TichuDB().tichus.cachedTichus,
+        tichusChange: TichuDB().tichus.changeCount,
+        child: TabBarView(
+          controller: _tabController,
+          children: <Widget>[
+            _PlayersTab(),
+            _GamesTab(),
+            _CustomizeTab(),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _GamesTab extends StatelessWidget {
-  final List<Game> _games = TichuDB().games.cachedGames;
-
   List<Widget> _gamesList(BuildContext context) {
     var list = <Widget>[];
     var dateFormatter = DateFormat.yMMMMd();
     String currentDate;
-
-    _games.forEach((item) {
+    var games = HomeData.of(context).games;
+    games.forEach((item) {
       if (currentDate != dateFormatter.format(item.createdOn)) {
         currentDate = dateFormatter.format(item.createdOn);
         list.add(Container(
@@ -165,10 +201,8 @@ class _GamesTab extends StatelessWidget {
 }
 
 class _PlayersTab extends StatelessWidget {
-  final PlayerRepository _playerRepository = TichuDB().players;
-
   List<Widget> _playersList(BuildContext context) {
-    var players = _playerRepository.players;
+    var players = HomeData.of(context).players;
     var list = <Widget>[];
     var currentLetter = '';
 
@@ -223,8 +257,6 @@ class _PlayersTab extends StatelessWidget {
 enum _TichuOptions { edit, delete }
 
 class _CustomizeTab extends StatelessWidget {
-  final TichuRepository _tichuRepository = TichuDB().tichus;
-
   void _deleteTichu(BuildContext context, int id) async {
     var result = await TichuDialog(context).deleteTichu(id);
     if (result) {
@@ -237,7 +269,8 @@ class _CustomizeTab extends StatelessWidget {
 
   List<Widget> _tichuList(BuildContext context) {
     var tichus = <Widget>[];
-    _tichuRepository.cachedTichus.forEach((item) {
+    var cachedTichus = HomeData.of(context).tichus;
+    cachedTichus.forEach((item) {
       var title = item.title;
       if (item.lang.isNotEmpty) {
         title = FlutterI18n.translate(context, item.lang + '.title');
