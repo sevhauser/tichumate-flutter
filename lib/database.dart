@@ -387,7 +387,7 @@ class PlayerRepository extends TichuRepo<Player> {
   @override
   Future<void> onDataChange() async {
     changeCount += 1;
-    players = await getAll(orderBy: 'name ASC');
+    players = await getAll(orderBy: 'name COLLATE NOCASE ASC');
   }
 
   Player getFromCache(int id) {
