@@ -1,10 +1,10 @@
-import 'package:tichumate/database.dart';
-import 'package:tichumate/models.dart';
+import 'package:tichumate/state/database.dart';
+import 'package:tichumate/state/models.dart';
 
 class PlayerStatistics {
   final _db = TichuDB();
   final int playerId;
-  Player player;
+  late Player player;
   List<Team> teams = [];
   List<GameTeam> gameTeams = [];
   List<Game> games = [];
@@ -36,21 +36,22 @@ class PlayerStatistics {
       }
     }
     for (var gt in gameTeams) {
-      var game = await _db.games.getFromId(gt.gameId);
-      if (game == null) continue;
+      var game = await _db.games.getFromId(gt.gameId!);
       gamesPlayed += 1;
       gamesWon += gt.win ? 1 : 0;
       gamesLost += game.finished && !gt.win ? 1 : 0;
       games.add(game);
 
-      var rounds = await _db.rounds.getFromGameId(game.id);
-      rounds.forEach((r) {
-        var score = r.score(gt.id);
-        scores.add(score);
-        roundsPlayed += 1;
-        roundsWon += score.win > 0 ? 1 : 0;
-        roundsDoubleWon += score.win == 2 ? 1 : 0;
-      });
+      var rounds = await _db.rounds.getFromGameId(game.id!);
+      for (var r in rounds) {
+        var score = r.score(gt.id!);
+        if (score != null) {
+          scores.add(score);
+          roundsPlayed += 1;
+          roundsWon += score.win > 0 ? 1 : 0;
+          roundsDoubleWon += score.win == 2 ? 1 : 0;
+        }
+      }
     }
   }
 }

@@ -1,35 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 
-import 'package:tichumate/database.dart';
-import 'package:tichumate/models.dart';
+import 'package:tichumate/state/database.dart';
+import 'package:tichumate/state/models.dart';
 import 'package:tichumate/dialogs/player.dart';
 import 'package:tichumate/utils/playerstatistics.dart';
 
 class PlayerView extends StatelessWidget {
+  const PlayerView({super.key});
+
   @override
   Widget build(BuildContext context) {
-    final Map<String, dynamic> args = ModalRoute.of(context).settings.arguments;
+    final Map<String, dynamic> args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     return _PlayerViewContent(args['playerId']);
   }
 }
 
 class _PlayerViewContent extends StatefulWidget {
   final int playerId;
-  _PlayerViewContent(this.playerId) : super();
+  const _PlayerViewContent(this.playerId) : super();
 
   @override
-  _PlayerViewContentState createState() => _PlayerViewContentState(playerId);
+  State<_PlayerViewContent> createState() => _PlayerViewContentState();
 }
 
 class _PlayerViewContentState extends State<_PlayerViewContent> {
-  final int playerId;
   bool _loaded = false;
   bool _hasPlayer = true;
-  Player _player;
-  PlayerStatistics _statistics;
+  late Player _player;
+  late PlayerStatistics _statistics;
+  int get playerId => widget.playerId;
 
-  _PlayerViewContentState(this.playerId) : super();
+  _PlayerViewContentState() : super();
 
   @override
   void initState() {
@@ -64,7 +67,7 @@ class _PlayerViewContentState extends State<_PlayerViewContent> {
 
   void _deletePlayer() async {
     var deleted = await PlayerDialog(context).deletePlayer(playerId);
-    if (deleted) {
+    if (deleted && mounted) {
       Navigator.of(context).pop();
     }
   }
@@ -78,18 +81,18 @@ class _PlayerViewContentState extends State<_PlayerViewContent> {
                   Card(
                       margin: EdgeInsets.zero,
                       color: Theme.of(context).primaryColor,
-                      shape: RoundedRectangleBorder(
+                      shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.zero),
                       child: Container(
-                        margin: EdgeInsets.all(16),
+                        margin: const EdgeInsets.all(16),
                         child: Column(
                           children: <Widget>[
                             Center(
                               child: Text(_player.name,
-                                  style: TextStyle(fontSize: 20)),
+                                  style: const TextStyle(fontSize: 20)),
                             ),
                             Container(
-                                padding: EdgeInsets.only(top: 4),
+                                padding: const EdgeInsets.only(top: 4),
                                 child: Center(
                                   child: Text(_player.icon),
                                 ))
@@ -110,15 +113,15 @@ class _PlayerViewContentState extends State<_PlayerViewContent> {
                                     context, 'player.statistics.won')
                                 .toUpperCase(),
                             value: _statistics.gamesWon.toString(),
-                            color: Colors.green[500]),
+                            color: Colors.green.shade500),
                         _DataRowItem(
                             label: FlutterI18n.translate(
                                     context, 'player.statistics.lost')
                                 .toUpperCase(),
                             value: _statistics.gamesLost.toString(),
-                            color: Colors.red[500]),
+                            color: Colors.red.shade500),
                       ]),
-                  Divider(),
+                  const Divider(),
                   _DataRow(
                       FlutterI18n.translate(context, 'round.rounds')
                           .toUpperCase(),
@@ -134,43 +137,43 @@ class _PlayerViewContentState extends State<_PlayerViewContent> {
                                   context, 'player.statistics.won')
                               .toUpperCase(),
                           value: _statistics.roundsWon.toString(),
-                          color: Colors.green[500],
+                          color: Colors.green.shade500,
                         ),
                         _DataRowItem(
                             label: FlutterI18n.translate(
                                     context, 'player.statistics.double_win')
                                 .toUpperCase(),
                             value: _statistics.roundsDoubleWon.toString(),
-                            color: Theme.of(context).accentColor),
+                            color: Colors.amber.shade400),
                         _DataRowItem(
                             label: FlutterI18n.translate(
                                     context, 'player.statistics.lost')
                                 .toUpperCase(),
                             value: _statistics.roundsLost.toString(),
-                            color: Colors.red[500]),
+                            color: Colors.red.shade500),
                       ]),
-                  Divider(),
+                  const Divider(),
                 ],
               )
             : Container(),
         bottomNavigationBar: BottomAppBar(
             color: Theme.of(context).primaryColor,
-            child: Container(
+            child: SizedBox(
                 height: 56,
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
                     IconButton(
-                      icon: Icon(Icons.arrow_back),
+                      icon: const Icon(Icons.arrow_back),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
-                    Spacer(),
+                    const Spacer(),
                     IconButton(
-                      icon: Icon(Icons.edit),
+                      icon: const Icon(Icons.edit),
                       onPressed: () => _editPlayer(),
                     ),
                     IconButton(
-                      icon: Icon(Icons.delete),
+                      icon: const Icon(Icons.delete),
                       onPressed: () => _deletePlayer(),
                     )
                   ],
@@ -182,41 +185,37 @@ class _DataRow extends StatelessWidget {
   final String title;
   final List<_DataRowItem> items;
 
-  _DataRow(this.title, this.items);
+  const _DataRow(this.title, this.items);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         children: <Widget>[
           Container(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Text(title, style: TextStyle(fontSize: 18)),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(title, style: const TextStyle(fontSize: 18)),
           ),
-          Container(
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: items
-                  .map((el) => Container(
-                      width: 75,
-                      child: Column(
-                        children: <Widget>[
-                          Container(
-                              padding: EdgeInsets.symmetric(vertical: 4),
-                              child: Text(el.value,
-                                  style: TextStyle(
-                                      fontFamily: 'RobotoSlab',
-                                      fontSize: 24,
-                                      color: el.color))),
-                          Container(
-                            child: Text(el.label),
-                          ),
-                        ],
-                      )))
-                  .toList(),
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: items
+                .map((el) => SizedBox(
+                    width: 75,
+                    child: Column(
+                      children: <Widget>[
+                        Container(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Text(el.value,
+                                style: TextStyle(
+                                    fontFamily: 'RobotoSlab',
+                                    fontSize: 24,
+                                    color: el.color))),
+                        Text(el.label),
+                      ],
+                    )))
+                .toList(),
           )
         ],
       ),
@@ -230,8 +229,8 @@ class _DataRowItem {
   final Color color;
 
   _DataRowItem({
-    @required this.label,
-    @required this.value,
-    this.color: Colors.white,
+    required this.label,
+    required this.value,
+    this.color = Colors.white,
   });
 }

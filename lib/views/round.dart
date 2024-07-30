@@ -2,23 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 
 import 'package:tichumate/components/gameheader.dart';
-import 'package:tichumate/database.dart';
-import 'package:tichumate/models.dart';
+import 'package:tichumate/state/database.dart';
+import 'package:tichumate/state/models.dart';
 import 'package:tichumate/utils/gamemanager.dart';
 
 class RoundViewArguments {
   int gameId;
-  int roundId;
+  int? roundId;
   RoundViewArguments({
-    @required this.gameId,
+    required this.gameId,
     this.roundId,
   });
 }
 
 class RoundView extends StatelessWidget {
+  const RoundView({super.key});
+
   @override
   Widget build(BuildContext context) {
-    RoundViewArguments args = ModalRoute.of(context).settings.arguments;
+    RoundViewArguments args =
+        ModalRoute.of(context)!.settings.arguments as RoundViewArguments;
     return _RoundViewContent(
       gameId: args.gameId,
       roundId: args.roundId,
@@ -27,20 +30,21 @@ class RoundView extends StatelessWidget {
 }
 
 class _RoundViewContent extends StatefulWidget {
-  final int gameId, roundId;
+  final int gameId;
+  final int? roundId;
 
-  _RoundViewContent({@required this.gameId, this.roundId, Key key})
-      : super(key: key);
+  const _RoundViewContent({required this.gameId, this.roundId});
 
   @override
   _RoundViewContentState createState() => _RoundViewContentState();
 }
 
 class _RoundViewContentState extends State<_RoundViewContent> {
-  int _gameId, _roundId;
-  bool _loaded = false, _hasChanged = false;
-  GameManager _gm;
-  RoundManager _m;
+  late int _gameId;
+  int? _roundId;
+  bool _loaded = false;
+  late GameManager _gm;
+  late RoundManager _m;
 
   @override
   void initState() {
@@ -69,7 +73,7 @@ class _RoundViewContentState extends State<_RoundViewContent> {
                 content: Text(FlutterI18n.translate(
                     context, 'round.please_select_a_winner')),
                 actions: <Widget>[
-                  FlatButton(
+                  TextButton(
                     child: Text(
                         FlutterI18n.translate(context, 'ui.ok').toUpperCase()),
                     onPressed: () => Navigator.of(context).pop(),
@@ -79,34 +83,32 @@ class _RoundViewContentState extends State<_RoundViewContent> {
       return;
     }
     await _m.save();
-    Navigator.of(context).pop();
-  }
-
-  Future<void> _closeDialog() async {
-    if (await _close()) {
+    if (mounted) {
       Navigator.of(context).pop();
     }
   }
 
-  Future<bool> _close() async {
-    if (!_hasChanged) {
-      return true;
+  Future<void> _closeDialog() async {
+    var close = await _close();
+    if (close != null && close && mounted) {
+      Navigator.of(context).pop();
     }
+  }
+
+  Future<bool?> _close() async {
     return await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Leave?'),
+        title: Text(FlutterI18n.translate(context, 'round.leave')),
         actions: <Widget>[
-          FlatButton(
-            child: const Text('Cancel'),
+          TextButton(
+            child: Text(FlutterI18n.translate(context, 'ui.cancel')),
             onPressed: () {
               Navigator.of(context).pop(false);
             },
           ),
-          FlatButton(
-            child: Text(
-              'Yes',
-            ),
+          TextButton(
+            child: Text(FlutterI18n.translate(context, 'ui.yes')),
             onPressed: () {
               Navigator.of(context).pop(true);
             },
@@ -118,16 +120,16 @@ class _RoundViewContentState extends State<_RoundViewContent> {
 
   List<Widget> _tichus(BuildContext context) {
     var result = <Widget>[];
-    TichuDB().tichus.cachedTichus.forEach((tichu) {
+    for (var tichu in TichuDB().tichus.cachedTichus) {
       var title = tichu.lang.isEmpty
           ? tichu.title
-          : FlutterI18n.translate(context, tichu.lang + '.title');
-      result.add(Divider(height: 1));
+          : FlutterI18n.translate(context, '${tichu.lang}.title');
+      result.add(const Divider(height: 1));
       result.add(_TichuInputRow(
         label: title.toUpperCase(),
         children: <Widget>[
           _TichuToggleButton(
-            active: _m.team1CallInfo(tichu.id, true) != null,
+            active: _m.team1CallInfo(tichu.id!, true) != null,
             label:
                 FlutterI18n.translate(context, 'round.success').toUpperCase(),
             onPressed: () => setState(() {
@@ -142,7 +144,7 @@ class _RoundViewContentState extends State<_RoundViewContent> {
             type: _TichuToggleButtonType.good,
           ),
           _TichuToggleButton(
-            active: _m.team1CallInfo(tichu.id, false) != null,
+            active: _m.team1CallInfo(tichu.id!, false) != null,
             label: FlutterI18n.translate(context, 'round.fail').toUpperCase(),
             onPressed: () => setState(() {
               _m.teamCall(
@@ -156,7 +158,7 @@ class _RoundViewContentState extends State<_RoundViewContent> {
             type: _TichuToggleButtonType.bad,
           ),
           _TichuToggleButton(
-            active: _m.team2CallInfo(tichu.id, false) != null,
+            active: _m.team2CallInfo(tichu.id!, false) != null,
             label: FlutterI18n.translate(context, 'round.fail').toUpperCase(),
             onPressed: () => setState(() {
               _m.teamCall(
@@ -170,7 +172,7 @@ class _RoundViewContentState extends State<_RoundViewContent> {
             type: _TichuToggleButtonType.bad,
           ),
           _TichuToggleButton(
-            active: _m.team2CallInfo(tichu.id, true) != null,
+            active: _m.team2CallInfo(tichu.id!, true) != null,
             label:
                 FlutterI18n.translate(context, 'round.success').toUpperCase(),
             onPressed: () => setState(() {
@@ -186,14 +188,18 @@ class _RoundViewContentState extends State<_RoundViewContent> {
           ),
         ],
       ));
-    });
+    }
     return result;
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: () => _close(),
+    return PopScope(
+        canPop: false,
+        onPopInvoked: (didPop) {
+          if (didPop) return;
+          _close();
+        },
         child: _loaded
             ? Scaffold(
                 body: Column(
@@ -214,7 +220,7 @@ class _RoundViewContentState extends State<_RoundViewContent> {
                     ),
                     Expanded(
                       child: ListView(
-                        padding: EdgeInsets.only(bottom: 28),
+                        padding: const EdgeInsets.only(bottom: 28),
                         children: <Widget>[
                           _TichuInputRow(
                             label: FlutterI18n.translate(
@@ -223,13 +229,13 @@ class _RoundViewContentState extends State<_RoundViewContent> {
                             children: <Widget>[
                               Expanded(
                                   child: Container(
-                                margin: EdgeInsets.only(top: 12),
+                                margin: const EdgeInsets.only(top: 12),
                                 child: SliderTheme(
                                   key: UniqueKey(),
                                   data: SliderTheme.of(context).copyWith(
-                                    thumbColor: Theme.of(context).accentColor,
-                                    activeTrackColor: Colors.grey[700],
-                                    inactiveTrackColor: Colors.grey[700],
+                                    thumbColor: Colors.amber.shade400,
+                                    activeTrackColor: Colors.grey.shade700,
+                                    inactiveTrackColor: Colors.grey.shade700,
                                     inactiveTickMarkColor: Colors.transparent,
                                     activeTickMarkColor: Colors.transparent,
                                     disabledActiveTickMarkColor:
@@ -255,7 +261,7 @@ class _RoundViewContentState extends State<_RoundViewContent> {
                               )),
                             ],
                           ),
-                          Divider(height: 1),
+                          const Divider(height: 1),
                           _TichuInputRow(
                             label:
                                 FlutterI18n.translate(context, 'round.winner')
@@ -307,21 +313,22 @@ class _RoundViewContentState extends State<_RoundViewContent> {
                 ),
                 floatingActionButton: FloatingActionButton(
                   onPressed: () => _save(),
-                  child: Icon(Icons.check),
+                  shape: const CircleBorder(),
+                  child: const Icon(Icons.check),
                 ),
                 floatingActionButtonLocation:
                     FloatingActionButtonLocation.centerDocked,
                 bottomNavigationBar: BottomAppBar(
                     color: Theme.of(context).primaryColor,
-                    shape: CircularNotchedRectangle(),
+                    shape: const CircularNotchedRectangle(),
                     notchMargin: 10,
-                    child: Container(
+                    child: SizedBox(
                         height: 56,
                         child: Row(
                           mainAxisSize: MainAxisSize.max,
                           children: <Widget>[
                             IconButton(
-                              icon: Icon(Icons.arrow_back),
+                              icon: const Icon(Icons.arrow_back),
                               onPressed: () => _closeDialog(),
                             ),
                           ],
@@ -338,12 +345,11 @@ class _TichuWinButton extends StatelessWidget {
   final String label;
   final _TichuButtonCallback onPressed;
 
-  _TichuWinButton({
-    @required this.active,
-    @required this.label,
-    @required this.onPressed,
-    Key key,
-  }) : super(key: key);
+  const _TichuWinButton({
+    required this.active,
+    required this.label,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -351,7 +357,7 @@ class _TichuWinButton extends StatelessWidget {
       active: active,
       label: label,
       onPressed: onPressed,
-      activeColor: Theme.of(context).accentColor,
+      activeColor: Colors.amber.shade300,
     );
   }
 }
@@ -364,23 +370,22 @@ class _TichuToggleButton extends StatelessWidget {
   final _TichuButtonCallback onPressed;
   final _TichuToggleButtonType type;
 
-  _TichuToggleButton({
-    @required this.label,
-    @required this.active,
-    @required this.onPressed,
-    @required this.type,
-    Key key,
-  }) : super(key: key);
+  const _TichuToggleButton({
+    required this.label,
+    required this.active,
+    required this.onPressed,
+    required this.type,
+  });
 
   @override
   Widget build(BuildContext context) {
-    var activeColor;
+    var activeColor = Colors.white;
     switch (type) {
       case _TichuToggleButtonType.bad:
-        activeColor = Colors.red[500];
+        activeColor = Colors.red.shade500;
         break;
       case _TichuToggleButtonType.good:
-        activeColor = Colors.green[500];
+        activeColor = Colors.green.shade500;
         break;
     }
     return _TichuButton(
@@ -397,20 +402,20 @@ class _TichuButton extends StatelessWidget {
   final Color activeColor;
   final _TichuButtonCallback onPressed;
   final String label;
-  _TichuButton({
-    @required this.active,
-    @required this.activeColor,
-    @required this.onPressed,
-    @required this.label,
-    Key key,
-  }) : super(key: key);
+  const _TichuButton({
+    required this.active,
+    required this.activeColor,
+    required this.onPressed,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return FlatButton(
+    return TextButton(
       child: Text(label,
           style: TextStyle(
-              color: active ? activeColor : Colors.grey[500], fontSize: 15)),
+              color: active ? activeColor : Colors.grey.shade500,
+              fontSize: 15)),
       onPressed: () => onPressed(),
     );
   }
@@ -420,18 +425,16 @@ class _TichuInputRow extends StatelessWidget {
   final List<Widget> children;
   final String label;
 
-  _TichuInputRow({@required this.children, @required this.label, Key key})
-      : super(key: key);
+  const _TichuInputRow({required this.children, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-        margin: EdgeInsets.only(bottom: 12, top: 18),
+        margin: const EdgeInsets.only(bottom: 12, top: 18),
         child: Column(children: <Widget>[
-          Container(
-              child: Center(
+          Center(
             child: Text(label, style: const TextStyle(fontSize: 15)),
-          )),
+          ),
           Flex(
             direction: Axis.horizontal,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

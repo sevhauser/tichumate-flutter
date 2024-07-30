@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 
-import 'package:tichumate/models.dart';
+import 'package:tichumate/state/models.dart';
 
 class GameForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -9,13 +9,12 @@ class GameForm extends StatelessWidget {
   final FormFieldSetter<int> winScoreCallback;
   final Game game;
 
-  GameForm(
-      {@required this.formKey,
-      @required this.ruleCallback,
-      @required this.winScoreCallback,
-      @required this.game,
-      Key key})
-      : super(key: key);
+  const GameForm(
+      {required this.formKey,
+      required this.ruleCallback,
+      required this.winScoreCallback,
+      required this.game,
+      super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +31,13 @@ class GameForm extends StatelessWidget {
               decoration: InputDecoration(
                   labelText:
                       FlutterI18n.translate(context, 'game.rules.points')),
-              onSaved: (value) => winScoreCallback(int.parse(value)),
+              onSaved: (value) => winScoreCallback(int.parse(value!)),
               initialValue: game.winScore.toString(),
               keyboardType: TextInputType.number,
               validator: (value) {
+                if (value == null) {
+                  return null;
+                }
                 if (value.isEmpty) {
                   return FlutterI18n.translate(
                       context, 'ui.errors.provide_value');
@@ -56,9 +58,9 @@ class GameForm extends StatelessWidget {
 
 class _GameRuleSelect extends FormField<String> {
   _GameRuleSelect({
-    @required FormFieldSetter<String> onSaved,
-    @required String initialValue,
-    @required BuildContext context,
+    required FormFieldSetter<String> onSaved,
+    required String initialValue,
+    required BuildContext context,
   }) : super(
             onSaved: onSaved,
             initialValue: initialValue,
@@ -70,7 +72,7 @@ class _GameRuleSelect extends FormField<String> {
                   child: Column(
                     children: <Widget>[
                       RadioListTile(
-                        activeColor: Theme.of(context).accentColor,
+                        activeColor: Colors.amber.shade400,
                         groupValue: state.value,
                         title: Text(
                             FlutterI18n.translate(context, 'game.rules.score')),
@@ -78,7 +80,7 @@ class _GameRuleSelect extends FormField<String> {
                         onChanged: (value) => state.didChange(GameRules.score),
                       ),
                       RadioListTile(
-                        activeColor: Theme.of(context).accentColor,
+                        activeColor: Colors.amber.shade400,
                         groupValue: state.value,
                         title: Text(FlutterI18n.translate(
                             context, 'game.rules.difference')),

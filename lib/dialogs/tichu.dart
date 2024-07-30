@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
-import 'package:tichumate/database.dart';
-import 'package:tichumate/models.dart';
+import 'package:tichumate/state/database.dart';
+import 'package:tichumate/state/models.dart';
 
 class TichuDialog {
   final BuildContext context;
   TichuDialog(this.context);
 
-  Future<Tichu> createTichu() async {
+  Future<Tichu?> createTichu() async {
     var newTichu = await _showEditDialog(Tichu());
     return newTichu.id == null ? null : newTichu;
   }
@@ -24,17 +24,17 @@ class TichuDialog {
         builder: (context) => AlertDialog(
               title: Text(FlutterI18n.translate(context, 'tichu.delete_tichu')),
               actions: <Widget>[
-                FlatButton(
+                TextButton(
                   child: Text(FlutterI18n.translate(context, 'ui.cancel')
                       .toUpperCase()),
                   onPressed: () {
                     Navigator.of(context).pop(false);
                   },
                 ),
-                FlatButton(
+                TextButton(
                   child: Text(
                     FlutterI18n.translate(context, 'ui.delete').toUpperCase(),
-                    style: TextStyle(color: Colors.red[500]),
+                    style: TextStyle(color: Colors.red.shade500),
                   ),
                   onPressed: () {
                     Navigator.of(context).pop(true);
@@ -42,7 +42,7 @@ class TichuDialog {
                 ),
               ],
             ));
-    if (shouldDelete) {
+    if (shouldDelete != null && shouldDelete) {
       return await TichuDB().tichus.deleteFromId(id);
     }
     return false;
@@ -67,43 +67,43 @@ class TichuDialog {
 
 class _TichuForm extends StatefulWidget {
   final Tichu tichu;
-  _TichuForm(this.tichu) : super();
+  const _TichuForm(this.tichu) : super();
 
   @override
-  _TichuFormState createState() => _TichuFormState(tichu);
+  _TichuFormState createState() => _TichuFormState();
 }
 
 class _TichuFormState extends State<_TichuForm> {
-  Tichu tichu;
   final _formKey = GlobalKey<FormState>();
-  _TichuFormState(this.tichu) : super();
+  _TichuFormState() : super();
 
   void _save() {
     final form = _formKey.currentState;
-    if (form.validate()) {
+    if (form != null && form.validate()) {
       form.save();
-      Navigator.of(context).pop(tichu);
+      Navigator.of(context).pop(widget.tichu);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    var tichu = widget.tichu;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Container(
+        SizedBox(
+          height: 64,
           child: Center(
               child: Text(
             FlutterI18n.translate(context,
                 'tichu.${tichu.id == null ? 'new_tichu' : 'edit_tichu'}'),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
             ),
           )),
-          height: 64,
         ),
         Container(
-          padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -112,22 +112,22 @@ class _TichuFormState extends State<_TichuForm> {
                   decoration: InputDecoration(
                       labelText:
                           FlutterI18n.translate(context, 'tichu.tichu_name')),
-                  initialValue: tichu.title ?? '',
+                  initialValue: tichu.title,
                   validator: (value) {
-                    if (value.isEmpty) {
+                    if (value == null || value.isEmpty) {
                       return FlutterI18n.translate(
                           context, 'ui.errors.provide_name');
                     }
                     return null;
                   },
-                  onSaved: (val) => setState(() => tichu.title = val),
+                  onSaved: (val) => setState(() => tichu.title = val!),
                 ),
                 TextFormField(
                   decoration: InputDecoration(
                       labelText: FlutterI18n.translate(context, 'ui.value')),
                   initialValue: tichu.id == null ? '' : tichu.value.toString(),
                   validator: (value) {
-                    if (value.isEmpty) {
+                    if (value == null || value.isEmpty) {
                       return FlutterI18n.translate(
                           context, 'ui.errors.provide_value');
                     }
@@ -141,33 +141,32 @@ class _TichuFormState extends State<_TichuForm> {
                   },
                   keyboardType: TextInputType.number,
                   onSaved: (val) => setState(() {
-                    tichu.value = int.parse(val);
+                    tichu.value = int.parse(val!);
                   }),
                 )
               ],
             ),
           ),
         ),
-        ButtonTheme.bar(
-          child: ButtonBar(
-            children: <Widget>[
-              FlatButton(
-                child: Text(
-                  FlutterI18n.translate(context, 'ui.cancel').toUpperCase(),
-                  style: TextStyle(color: Theme.of(context).accentColor),
-                ),
-                onPressed: () => Navigator.of(context).pop(null),
+        OverflowBar(
+          alignment: MainAxisAlignment.center,
+          children: <Widget>[
+            TextButton(
+              child: Text(
+                FlutterI18n.translate(context, 'ui.cancel').toUpperCase(),
+                style: TextStyle(color: Colors.amber.shade400),
               ),
-              FlatButton(
-                child: Text(
-                  FlutterI18n.translate(context, 'ui.save').toUpperCase(),
-                  style: TextStyle(color: Colors.greenAccent[400]),
-                ),
-                onPressed: () => _save(),
+              onPressed: () => Navigator.of(context).pop(null),
+            ),
+            TextButton(
+              child: Text(
+                FlutterI18n.translate(context, 'ui.save').toUpperCase(),
+                style: TextStyle(color: Colors.greenAccent.shade400),
               ),
-            ],
-          ),
-        )
+              onPressed: () => _save(),
+            ),
+          ],
+        ),
       ],
     );
   }

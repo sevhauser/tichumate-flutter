@@ -73,7 +73,8 @@
     "win": "Win",
     "success": "Success",
     "fail": "Fail",
-    "please_select_a_winner": "Please select a winner."
+    "please_select_a_winner": "Please select a winner.",
+    "leave": "Leave?"
   },
   "team": {
     "team": "Team",
@@ -113,7 +114,7 @@
     "light_theme": "Light"
   },
   "about": {
-    "about_text": "TichuMate is made with Flutter by Severin Hauser. The source code for this app is available on GitHub (see link below).",
+    "about_text": "The source code for this app is available on GitHub (see link below).",
     "version_x": "Version {version}"
   }
 }

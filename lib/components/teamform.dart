@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 
-import 'package:tichumate/models.dart';
+import 'package:tichumate/state/models.dart';
 import 'package:tichumate/dialogs/player.dart';
 
 class TeamForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final FormFieldSetter<String> teamNameCallback;
   final FormFieldSetter<List<Player>> playersCallback;
-  final List<Player> secondaryPlayers;
+  final List<Player>? secondaryPlayers;
   final Team team;
 
-  TeamForm(
-      {@required this.formKey,
-      @required this.team,
-      @required this.teamNameCallback,
-      @required this.playersCallback,
+  const TeamForm(
+      {required this.formKey,
+      required this.team,
+      required this.teamNameCallback,
+      required this.playersCallback,
       this.secondaryPlayers,
-      Key key})
-      : super(key: key);
+      super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +35,7 @@ class TeamForm extends StatelessWidget {
               context: context,
               initialValue: team.players,
               onSaved: playersCallback,
-              secondaryPlayers: secondaryPlayers,
+              secondaryPlayers: secondaryPlayers ?? List.empty(),
             ),
           ],
         ));
@@ -49,18 +48,20 @@ class TeamPlayersSelect extends FormField<List<Player>> {
     return list;
   }
 
-  TeamPlayersSelect({
-    FormFieldSetter<List<Player>> onSaved,
-    List<Player> initialValue,
-    List<Player> secondaryPlayers,
-    @required BuildContext context,
-  }) : super(
+  TeamPlayersSelect(
+      {required BuildContext context,
+      required FormFieldSetter<List<Player>> onSaved,
+      required List<Player> initialValue,
+      required List<Player> secondaryPlayers,
+      super.key})
+      : super(
             onSaved: onSaved,
             initialValue: initialValue,
             builder: (FormFieldState<List<Player>> state) {
+              var value = state.value ?? List.empty();
               return Column(children: <Widget>[
                 Container(
-                    padding: EdgeInsets.only(top: 10, bottom: 10),
+                    padding: const EdgeInsets.only(top: 10, bottom: 10),
                     child: Row(
                       children: <Widget>[
                         Flexible(
@@ -72,18 +73,19 @@ class TeamPlayersSelect extends FormField<List<Player>> {
                                       context, 'player.players')),
                               child: Wrap(
                                 spacing: 5,
-                                children: state.value.isEmpty
+                                children: value.isEmpty
                                     ? [
                                         Text(FlutterI18n.translate(
                                             context, 'player.no_players'))
                                       ]
-                                    : state.value
-                                        .map((player) => Chip(
+                                    : value
+                                        .map((player) => InputChip(
                                               avatar: Text(player.icon),
                                               label: Text(player.name),
+                                              visualDensity:
+                                                  VisualDensity.compact,
                                               onDeleted: () => state.didChange(
-                                                  state
-                                                      .value
+                                                  value
                                                       .where((item) =>
                                                           item != player)
                                                       .toList()),
@@ -92,20 +94,21 @@ class TeamPlayersSelect extends FormField<List<Player>> {
                               )),
                         ),
                         Container(
-                          padding: EdgeInsets.only(top: 18),
+                          padding: const EdgeInsets.only(top: 18),
                           child: IconButton(
-                              icon: Icon(Icons.add_circle),
+                              icon: const Icon(Icons.add_circle),
                               onPressed: () async {
                                 var result = await PlayerDialog(context)
-                                    .selectPlayer(state.value,
+                                    .selectPlayer(value,
                                         secondary: secondaryPlayers);
-                                if (result is Player && result.id == null) {
+                                if (result == null || result.id == null) {
+                                  if (!context.mounted) return;
                                   result =
                                       await PlayerDialog(context).newPlayer();
                                 }
                                 if (result != null) {
                                   state.didChange(
-                                      _addPlayerToList(state.value, result));
+                                      _addPlayerToList(value, result));
                                 }
                               }),
                         ),

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
+import 'package:tichumate/components/fab.dart';
 
 import 'package:tichumate/components/gameheader.dart';
-import 'package:tichumate/database.dart';
 import 'package:tichumate/dialogs/player.dart';
 import 'package:tichumate/dialogs/tichu.dart';
-import 'package:tichumate/models.dart';
+import 'package:tichumate/state/database.dart';
+import 'package:tichumate/state/models.dart';
 import 'package:tichumate/views/game.dart';
 
 class HomeData extends InheritedWidget {
@@ -15,55 +16,54 @@ class HomeData extends InheritedWidget {
   final List<Game> games;
   final List<Tichu> tichus;
 
-  HomeData({
-    @required this.players,
-    @required this.games,
-    @required this.tichus,
-    @required this.playersChange,
-    @required this.gamesChange,
-    @required this.tichusChange,
-    @required Widget child,
-    Key key,
-  }) : super(child: child, key: key);
+  const HomeData({
+    required this.players,
+    required this.games,
+    required this.tichus,
+    required this.playersChange,
+    required this.gamesChange,
+    required this.tichusChange,
+    required super.child,
+    super.key,
+  });
 
   @override
-  bool updateShouldNotify(HomeData old) {
-    var result = (playersChange != old.playersChange ||
-        gamesChange != old.gamesChange ||
-        tichusChange != old.tichusChange);
+  bool updateShouldNotify(HomeData oldWidget) {
+    var result = (playersChange != oldWidget.playersChange ||
+        gamesChange != oldWidget.gamesChange ||
+        tichusChange != oldWidget.tichusChange);
     return result;
   }
 
   static HomeData of(BuildContext context) {
-    return context.inheritFromWidgetOfExactType(HomeData) as HomeData;
+    return context.dependOnInheritedWidgetOfExactType<HomeData>() as HomeData;
   }
 }
 
 class HomeView extends StatefulWidget {
   final int initialIndex;
-  const HomeView({Key key, this.initialIndex: 1}) : super(key: key);
+  const HomeView({super.key, this.initialIndex = 1});
 
   @override
-  _HomeViewState createState() => _HomeViewState(initialIndex);
+  State<HomeView> createState() => _HomeViewState();
 }
 
 class _HomeViewState extends State<HomeView>
     with SingleTickerProviderStateMixin {
-  static final tabStyle = TextStyle(
+  static const tabStyle = TextStyle(
     fontFamily: 'RobotoCondensed',
     fontSize: 16,
   );
-  final int initialIndex;
 
-  _HomeViewState(this.initialIndex) : super();
+  _HomeViewState() : super();
 
-  TabController _tabController;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController =
-        TabController(vsync: this, length: 3, initialIndex: initialIndex);
+    _tabController = TabController(
+        vsync: this, length: 3, initialIndex: widget.initialIndex);
   }
 
   @override
@@ -83,11 +83,12 @@ class _HomeViewState extends State<HomeView>
         ),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.settings),
+            icon: const Icon(Icons.settings),
             onPressed: () => Navigator.of(context).pushNamed('/settings'),
           ),
         ],
         centerTitle: true,
+        toolbarHeight: 48,
         bottom: TabBar(
           tabs: <Tab>[
             Tab(
@@ -107,6 +108,7 @@ class _HomeViewState extends State<HomeView>
           ],
           controller: _tabController,
         ),
+        shape: null,
       ),
       body: HomeData(
         players: TichuDB().players.players,
@@ -132,20 +134,20 @@ class _GamesTab extends StatelessWidget {
   List<Widget> _gamesList(BuildContext context) {
     var list = <Widget>[];
     var dateFormatter = DateFormat.yMMMMd();
-    String currentDate;
+    String? currentDate;
     var games = HomeData.of(context).games;
-    games.forEach((item) {
+    for (var item in games) {
       if (currentDate != dateFormatter.format(item.createdOn)) {
         currentDate = dateFormatter.format(item.createdOn);
         list.add(Container(
-          child: Center(child: Text(currentDate)),
-          color: Colors.grey[900],
+          color: Theme.of(context).colorScheme.surfaceDim,
           padding: const EdgeInsets.all(5),
+          child: Center(child: Text(currentDate)),
         ));
       }
       list.add(InkWell(
         onTap: () => Navigator.of(context)
-            .pushNamed('/game', arguments: GameViewArguments(gameId: item.id)),
+            .pushNamed('/game', arguments: GameViewArguments(gameId: item.id!)),
         child: GameSummary(
           compact: true,
           slots: <GameHeaderSlot>[
@@ -166,7 +168,7 @@ class _GamesTab extends StatelessWidget {
           ],
         ),
       ));
-    });
+    }
     return list;
   }
 
@@ -174,22 +176,20 @@ class _GamesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     var gamesList = _gamesList(context);
     return Scaffold(
-      body: Container(
-        child: ListView.separated(
-          itemCount: gamesList.length,
-          itemBuilder: (context, index) => gamesList[index],
-          separatorBuilder: (context, index) {
-            var isContainer = gamesList[index] is Container;
-            var beforeContainer = index < gamesList.length - 1 &&
-                gamesList[index + 1] is Container;
-            if (isContainer || beforeContainer) {
-              return Container();
-            }
-            return Divider();
-          },
-        ),
+      body: ListView.separated(
+        itemCount: gamesList.length,
+        itemBuilder: (context, index) => gamesList[index],
+        separatorBuilder: (context, index) {
+          var isContainer = gamesList[index] is Container;
+          var beforeContainer =
+              index < gamesList.length - 1 && gamesList[index + 1] is Container;
+          if (isContainer || beforeContainer) {
+            return Container();
+          }
+          return const Divider();
+        },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: ExtendedFab(
         heroTag: 'home-new-game',
         label:
             Text(FlutterI18n.translate(context, 'game.new_game').toUpperCase()),
@@ -206,44 +206,44 @@ class _PlayersTab extends StatelessWidget {
     var list = <Widget>[];
     var currentLetter = '';
 
-    players.forEach((item) {
+    for (var item in players) {
       if (currentLetter != item.name[0].toUpperCase()) {
         currentLetter = item.name[0].toUpperCase();
         list.add(Container(
-          child: Center(child: Text(currentLetter)),
-          color: Colors.grey[900],
+          color: Theme.of(context).colorScheme.surfaceDim,
           padding: const EdgeInsets.all(5),
+          child: Center(child: Text(currentLetter)),
         ));
       }
       list.add(ListTile(
-        leading: Text(item.icon, style: TextStyle(fontSize: 18)),
+        leading: Text(item.icon, style: const TextStyle(fontSize: 18)),
         title: Text(item.name),
         onTap: () => Navigator.of(context)
             .pushNamed('/player', arguments: {'playerId': item.id}),
       ));
-    });
+    }
     return list;
   }
 
   @override
   Widget build(BuildContext context) {
-    var _players = _playersList(context);
+    var players = _playersList(context);
     return Scaffold(
       body: ListView.separated(
-          itemCount: _players.length,
+          itemCount: players.length,
           itemBuilder: (context, index) {
-            return _players[index];
+            return players[index];
           },
           separatorBuilder: (context, index) {
-            var isContainer = _players[index] is Container;
+            var isContainer = players[index] is Container;
             var beforeContainer =
-                index < _players.length - 1 && _players[index + 1] is Container;
+                index < players.length - 1 && players[index + 1] is Container;
             if (isContainer || beforeContainer) {
               return Container();
             }
-            return Divider();
+            return const Divider();
           }),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: ExtendedFab(
         heroTag: 'home-new-player',
         onPressed: () => PlayerDialog(context).newPlayer(),
         label: Text(
@@ -259,10 +259,11 @@ enum _TichuOptions { edit, delete }
 class _CustomizeTab extends StatelessWidget {
   void _deleteTichu(BuildContext context, int id) async {
     var result = await TichuDialog(context).deleteTichu(id);
+    if (!context.mounted) return;
     if (result) {
-      Scaffold.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(FlutterI18n.translate(context, 'tichu.tichu_deleted')),
-        duration: Duration(seconds: 1),
+        duration: const Duration(seconds: 1),
       ));
     }
   }
@@ -270,24 +271,24 @@ class _CustomizeTab extends StatelessWidget {
   List<Widget> _tichuList(BuildContext context) {
     var tichus = <Widget>[];
     var cachedTichus = HomeData.of(context).tichus;
-    cachedTichus.forEach((item) {
+    for (var item in cachedTichus) {
       var title = item.title;
       if (item.lang.isNotEmpty) {
-        title = FlutterI18n.translate(context, item.lang + '.title');
+        title = FlutterI18n.translate(context, '${item.lang}.title');
       }
       tichus.add(ListTile(
         title: Text(title),
-        subtitle: Text(FlutterI18n.translate(
-            context, 'tichu.x_points', {'x': item.value.toString()})),
-        leading: item.protected ? Icon(Icons.lock) : Text(''),
+        subtitle: Text(FlutterI18n.translate(context, 'tichu.x_points',
+            translationParams: {'x': item.value.toString()})),
+        leading: item.protected ? const Icon(Icons.lock) : const Text(''),
         trailing: item.protected
-            ? Text('')
+            ? const Text('')
             : PopupMenuButton(
                 onSelected: (_TichuOptions result) {
                   if (result == _TichuOptions.edit) {
-                    TichuDialog(context).editTichu(item.id);
+                    TichuDialog(context).editTichu(item.id!);
                   } else if (result == _TichuOptions.delete) {
-                    _deleteTichu(context, item.id);
+                    _deleteTichu(context, item.id!);
                   }
                 },
                 itemBuilder: (context) => <PopupMenuEntry<_TichuOptions>>[
@@ -298,24 +299,24 @@ class _CustomizeTab extends StatelessWidget {
                   PopupMenuItem<_TichuOptions>(
                       value: _TichuOptions.delete,
                       child: Text(FlutterI18n.translate(context, 'ui.delete'),
-                          style: TextStyle(color: Colors.red[500])))
+                          style: TextStyle(color: Colors.red.shade500)))
                 ],
               ),
       ));
-    });
+    }
     return tichus;
   }
 
   @override
   Widget build(BuildContext context) {
-    var _tichus = _tichuList(context);
+    var tichus = _tichuList(context);
     return Scaffold(
       body: ListView.separated(
-        separatorBuilder: (context, index) => Divider(),
-        itemCount: _tichus.length,
-        itemBuilder: (context, index) => _tichus[index],
+        separatorBuilder: (context, index) => const Divider(),
+        itemCount: tichus.length,
+        itemBuilder: (context, index) => tichus[index],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: ExtendedFab(
         heroTag: 'home-new-tichu',
         onPressed: () => TichuDialog(context).createTichu(),
         label: Text(

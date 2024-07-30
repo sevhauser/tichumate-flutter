@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
-import 'package:flutter/rendering.dart';
 
-import 'package:tichumate/database.dart';
-import 'package:tichumate/models.dart';
+import 'package:tichumate/state/database.dart';
+import 'package:tichumate/state/models.dart';
 
 class PlayerDialog {
   final BuildContext context;
   PlayerDialog(this.context);
 
-  Future<Player> newPlayer() async {
+  Future<Player?> newPlayer() async {
     var newPlayer = await _showEditDialog(Player());
     return newPlayer.id == null ? null : newPlayer;
   }
@@ -22,25 +21,26 @@ class PlayerDialog {
 
   Future<bool> deletePlayer(int id) async {
     var player = await TichuDB().players.getFromId(id);
+    if (!context.mounted) return false;
     var shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(FlutterI18n.translate(
-            context, 'ui.delete_target', {'target': player.name})),
+        title: Text(FlutterI18n.translate(context, 'ui.delete_target',
+            translationParams: {'target': player.name})),
         content:
             Text(FlutterI18n.translate(context, 'ui.this_cannot_be_undone')),
         actions: <Widget>[
-          FlatButton(
+          TextButton(
             child:
                 Text(FlutterI18n.translate(context, 'ui.cancel').toUpperCase()),
             onPressed: () {
               Navigator.of(context).pop(false);
             },
           ),
-          FlatButton(
+          TextButton(
             child: Text(
               FlutterI18n.translate(context, 'ui.delete').toUpperCase(),
-              style: TextStyle(color: Colors.red[500]),
+              style: TextStyle(color: Colors.red.shade500),
             ),
             onPressed: () {
               Navigator.of(context).pop(true);
@@ -49,36 +49,34 @@ class PlayerDialog {
         ],
       ),
     );
-    if (shouldDelete) {
+    if (shouldDelete != null && shouldDelete) {
       return await TichuDB().players.deleteFromId(id);
     }
     return false;
   }
 
-  Future<Player> selectPlayer(List<Player> exclude,
-      {List<Player> secondary}) async {
+  Future<Player?> selectPlayer(List<Player> exclude,
+      {List<Player>? secondary}) async {
     var players = List<Player>.from(TichuDB().players.players);
-    if (exclude != null) {
-      players.removeWhere((player) => exclude.any((p) => p.id == player.id));
-    }
+    players.removeWhere((player) => exclude.any((p) => p.id == player.id));
     var playerList = players.map((player) {
-      bool _secondary =
+      bool isSecondary =
           secondary == null ? false : secondary.any((p) => p.id == player.id);
       return SimpleDialogOption(
         child: Row(
           children: <Widget>[
             Container(
+              padding: const EdgeInsets.only(right: 11, left: 1),
               child: Text(
                 player.icon,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                 ),
               ),
-              padding: EdgeInsets.only(right: 11, left: 1),
             ),
             Text(player.name,
                 style: TextStyle(
-                    color: _secondary ? Colors.white30 : Colors.white))
+                    color: isSecondary ? Colors.white30 : Colors.white))
           ],
         ),
         onPressed: () => Navigator.of(context).pop(player),
@@ -88,8 +86,8 @@ class PlayerDialog {
       child: Row(
         children: <Widget>[
           Container(
-            child: Icon(Icons.add_circle),
-            padding: EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.only(right: 10),
+            child: const Icon(Icons.add_circle),
           ),
           Text(
               FlutterI18n.translate(context, 'player.new_player').toUpperCase())
@@ -126,43 +124,43 @@ class PlayerDialog {
 
 class _PlayerForm extends StatefulWidget {
   final Player player;
-  _PlayerForm(this.player) : super();
+  const _PlayerForm(this.player) : super();
 
   @override
-  _PlayerFormState createState() => _PlayerFormState(player);
+  _PlayerFormState createState() => _PlayerFormState();
 }
 
 class _PlayerFormState extends State<_PlayerForm> {
-  Player player;
   final _formKey = GlobalKey<FormState>();
-  _PlayerFormState(this.player) : super();
+  _PlayerFormState() : super();
 
   void _save() {
     final form = _formKey.currentState;
-    if (form.validate()) {
+    if (form != null && form.validate()) {
       form.save();
-      Navigator.of(context).pop(player);
+      Navigator.of(context).pop(widget.player);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    var player = widget.player;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Container(
+        SizedBox(
+          height: 64,
           child: Center(
               child: Text(
             FlutterI18n.translate(context,
                 'player.${player.id == null ? 'new_player' : 'edit_player'}'),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
             ),
           )),
-          height: 64,
         ),
         Container(
-          padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
           child: Form(
             key: _formKey,
             child: Row(
@@ -175,17 +173,17 @@ class _PlayerFormState extends State<_PlayerForm> {
                             context, 'player.player_name')),
                     initialValue: player.name,
                     validator: (value) {
-                      if (value.isEmpty) {
+                      if (value != null && value.isEmpty) {
                         return FlutterI18n.translate(
                             context, 'ui.errors.provide_name');
                       }
                       return null;
                     },
-                    onSaved: (val) => setState(() => player.name = val),
+                    onSaved: (val) => setState(() => player.name = val!),
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.only(bottom: 10, left: 10),
+                  padding: const EdgeInsets.only(bottom: 10, left: 10),
                   child: DropdownButtonHideUnderline(
                       child: DropdownButton(
                     value: player.icon,
@@ -193,13 +191,15 @@ class _PlayerFormState extends State<_PlayerForm> {
                     underline: Container(height: 1),
                     items: emojiList
                         .map((emoji) => DropdownMenuItem(
-                              child: Center(child: Text(emoji)),
                               value: emoji,
+                              child: Center(child: Text(emoji)),
                             ))
                         .toList(),
                     onChanged: (newValue) {
                       setState(() {
-                        player.icon = newValue;
+                        if (newValue != null) {
+                          player.icon = newValue;
+                        }
                       });
                     },
                   )),
@@ -208,25 +208,25 @@ class _PlayerFormState extends State<_PlayerForm> {
             ),
           ),
         ),
-        ButtonTheme.bar(
-            child: ButtonBar(
+        OverflowBar(
+          alignment: MainAxisAlignment.center,
           children: <Widget>[
-            FlatButton(
+            TextButton(
               child: Text(
                 FlutterI18n.translate(context, 'ui.cancel').toUpperCase(),
-                style: TextStyle(color: Theme.of(context).accentColor),
+                style: TextStyle(color: Colors.amber.shade400),
               ),
               onPressed: () => Navigator.of(context).pop(null),
             ),
-            FlatButton(
+            TextButton(
               child: Text(
                 FlutterI18n.translate(context, 'ui.save').toUpperCase(),
-                style: TextStyle(color: Colors.greenAccent[400]),
+                style: TextStyle(color: Colors.greenAccent.shade400),
               ),
               onPressed: () => _save(),
             ),
           ],
-        ))
+        )
       ],
     );
   }

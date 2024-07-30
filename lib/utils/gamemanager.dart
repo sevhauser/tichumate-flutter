@@ -1,17 +1,16 @@
-import 'package:flutter/material.dart';
 import 'package:tichumate/components/gameheader.dart';
-import 'package:tichumate/database.dart';
-import 'package:tichumate/models.dart';
+import 'package:tichumate/state/database.dart';
+import 'package:tichumate/state/models.dart';
 
 class GameManager {
   int gameId;
-  Game game;
-  List<Round> rounds;
+  late Game game;
+  late List<Round> rounds;
   bool initialized = false;
-  TichuDB _db;
+  late TichuDB _db;
 
-  int get team1Id => game.team1.id;
-  int get team2Id => game.team2.id;
+  int get team1Id => game.team1.id!;
+  int get team2Id => game.team2.id!;
   GameTeam get team1 => game.team1;
   GameTeam get team2 => game.team2;
 
@@ -21,13 +20,13 @@ class GameManager {
   int get team1Difference => team1.score - team2.score;
   int get team2Difference => team2.score - team1.score;
 
-  GameManager({@required this.gameId}) {
+  GameManager({required this.gameId}) {
     _db = TichuDB();
   }
 
   Future<void> init() async {
     game = await _db.games.getFromId(gameId);
-    rounds = await _db.rounds.getFromGameId(game.id);
+    rounds = await _db.rounds.getFromGameId(game.id!);
   }
 
   GameHeaderSlotStatus _teamStatus(GameTeam team) {
@@ -40,10 +39,10 @@ class GameManager {
   void _recalculate() {
     team1.score = 0;
     team2.score = 0;
-    rounds.forEach((round) {
-      team1.score += round.score(team1Id).score;
-      team2.score += round.score(team2Id).score;
-    });
+    for (var round in rounds) {
+      team1.score += round.score(team1Id)?.score ?? 0;
+      team2.score += round.score(team2Id)?.score ?? 0;
+    }
     var team1Win = false, team2Win = false;
     switch (game.rule) {
       case GameRules.score:
@@ -79,7 +78,7 @@ class GameManager {
   Future<void> removeRound(int roundId) async {
     var roundIndex = rounds.indexWhere((round) => round.id == roundId);
     if (roundIndex < 0) return;
-    await _db.rounds.deleteFromId(rounds[roundIndex].id);
+    await _db.rounds.deleteFromId(rounds[roundIndex].id!);
     rounds.removeAt(roundIndex);
     await save();
   }
@@ -98,7 +97,7 @@ class GameManager {
     await save();
   }
 
-  RoundManager roundManager({int roundId}) {
+  RoundManager roundManager({int? roundId}) {
     if (roundId == null) {
       var round = Round.forGame(game.id);
       round.scores[team1Id] = Score.forGameTeam(team1Id);
@@ -118,33 +117,34 @@ class GameManager {
 
 class RoundManager {
   GameManager gameManager;
-  int gameId, roundId;
+  int? roundId;
   final int _baseScoreDistribution = 0;
   Round round;
   Game game;
-  int _scoreDistribution;
+  late int _scoreDistribution;
 
   RoundManager({
-    @required this.gameManager,
-    @required this.game,
-    @required this.round,
+    required this.gameManager,
+    required this.game,
+    required this.round,
   }) {
     if (newRound || hasDoubleWin) {
       _scoreDistribution = _baseScoreDistribution;
     } else {
-      _scoreDistribution = 50 - round.scores[team1Id].cardPoints;
+      _scoreDistribution = 50 - round.scores[team1Id]!.cardPoints;
     }
+    roundId = round.id;
   }
 
   bool get newRound => round.id == null;
 
-  int get team1Id => game.team1.id;
-  int get team2Id => game.team2.id;
+  int get team1Id => game.team1.id!;
+  int get team2Id => game.team2.id!;
   GameTeam get team1 => game.team1;
   GameTeam get team2 => game.team2;
 
-  Score get score1 => round.score(team1Id);
-  Score get score2 => round.score(team2Id);
+  Score get score1 => round.score(team1Id)!;
+  Score get score2 => round.score(team2Id)!;
 
   bool get hasWinner => round.hasWinner();
 
@@ -162,8 +162,8 @@ class RoundManager {
   GameHeaderSlotStatus get score2Status => _scoreStatus(team2Id);
 
   GameHeaderSlotStatus _scoreStatus(int gameTeamId) {
-    var result;
-    switch (round.score(gameTeamId).win) {
+    GameHeaderSlotStatus result;
+    switch (round.score(gameTeamId)!.win) {
       case 1:
       case 2:
         result = GameHeaderSlotStatus.accent;
@@ -178,7 +178,7 @@ class RoundManager {
     return score1.win == 2 || score2.win == 2;
   }
 
-  void win1({bool doubleWin: false}) {
+  void win1({bool doubleWin = false}) {
     if (doubleWin && score1.win != 2) {
       score1.win = 2;
     } else {
@@ -193,7 +193,7 @@ class RoundManager {
     }
   }
 
-  void win2({bool doubleWin: false}) {
+  void win2({bool doubleWin = false}) {
     if (doubleWin && score2.win != 2) {
       score2.win = 2;
     } else {
@@ -226,15 +226,15 @@ class RoundManager {
     }
   }
 
-  Call team1CallInfo(int tichuId, bool success) {
+  Call? team1CallInfo(int tichuId, bool success) {
     return _callInfo(score1.calls, tichuId, success);
   }
 
-  Call team2CallInfo(int tichuId, bool success) {
+  Call? team2CallInfo(int tichuId, bool success) {
     return _callInfo(score2.calls, tichuId, success);
   }
 
-  Call _callInfo(List<Call> calls, int tichuId, bool success) {
+  Call? _callInfo(List<Call> calls, int tichuId, bool success) {
     var index = calls.indexWhere(
         (call) => call.tichuId == tichuId && call.success == success);
     if (index >= 0) {
@@ -255,27 +255,31 @@ class GameStatisticsProvider {
   GameManager get _m => gameManager;
 
   GameStatisticsProvider({
-    @required this.gameManager,
+    required this.gameManager,
   });
 
   void generateData() {
     var ts1 = TeamStatistics(team: _m.team1),
         ts2 = TeamStatistics(team: _m.team2);
-    _m.rounds.forEach((round) {
+    for (var round in _m.rounds) {
       var score1 = round.score(_m.team1Id);
-      ts1.wins += score1.win > 0 ? 1 : 0;
-      ts1.doubleWins += score1.win == 2 ? 1 : 0;
-      ts1.winStreak = (score1.win > 0) ? ts1.winStreak + 1 : 0;
-      ts1.roundScores.add(score1.score);
-      ts1.addRoundScore(score1);
+      if (score1 != null) {
+        ts1.wins += score1.win > 0 ? 1 : 0;
+        ts1.doubleWins += score1.win == 2 ? 1 : 0;
+        ts1.winStreak = (score1.win > 0) ? ts1.winStreak + 1 : 0;
+        ts1.roundScores.add(score1.score);
+        ts1.addRoundScore(score1);
+      }
 
       var score2 = round.score(_m.team2Id);
-      ts2.wins += score2.win > 0 ? 1 : 0;
-      ts2.doubleWins += score2.win == 2 ? 1 : 0;
-      ts2.winStreak = (score2.win > 0) ? ts2.winStreak + 1 : 0;
-      ts2.roundScores.add(score2.score);
-      ts2.addRoundScore(score2);
-    });
+      if (score2 != null) {
+        ts2.wins += score2.win > 0 ? 1 : 0;
+        ts2.doubleWins += score2.win == 2 ? 1 : 0;
+        ts2.winStreak = (score2.win > 0) ? ts2.winStreak + 1 : 0;
+        ts2.roundScores.add(score2.score);
+        ts2.addRoundScore(score2);
+      }
+    }
     ts1.generateData();
     ts2.generateData();
     statistics[_m.team1Id] = ts1;
@@ -303,7 +307,7 @@ class TeamStatistics {
   List<int> accumulatedRoundScores = [0];
 
   TeamStatistics({
-    @required this.team,
+    required this.team,
   });
 
   void addRoundScore(Score score) {
@@ -336,11 +340,11 @@ class RoundScoreData {
   final List<Call> calls;
 
   RoundScoreData({
-    @required this.roundNumber,
-    @required this.score,
-    @required this.accumulatedScore,
-    @required this.calls,
-    this.win: false,
-    this.doubleWin: false,
+    required this.roundNumber,
+    required this.score,
+    required this.accumulatedScore,
+    required this.calls,
+    this.win = false,
+    this.doubleWin = false,
   });
 }

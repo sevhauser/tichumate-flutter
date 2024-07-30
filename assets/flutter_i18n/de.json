@@ -74,7 +74,8 @@
     "win": "Sieg",
     "success": "Erfolg",
     "fail": "Fail",
-    "please_select_a_winner": "Bitte wähle einen Gewinner."
+    "please_select_a_winner": "Bitte wähle einen Gewinner.",
+    "leave": "Schliessen?"
   },
   "team": {
     "team": "Team",
@@ -114,7 +115,7 @@
     "light_theme": "Hell"
   },
   "about": {
-    "about_text": "TichuMate wurde von Severin Hauser mit Flutter erstellt. Der Quellcode ist auf GitHub verfügbar (siehe Link unten).",
+    "about_text": "Der Quellcode dieser App ist auf GitHub verfügbar (siehe Link unten).",
     "version_x": "Version {version}"
   }
 }

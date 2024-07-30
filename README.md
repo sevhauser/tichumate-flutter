@@ -1,6 +1,6 @@
 # TichuMate - Manage Your Tichu Games!
 
-Get TichuMate on the [Google Play Store](https://play.google.com/store/apps/details?id=ch.tilted.tichumate). (F-Droid coming soon!)
+Get TichuMate on the [Google Play Store](https://play.google.com/store/apps/details?id=ch.tilted.tichumate).
 
 TichuMate is a counter / tracker app for the card game Tichu. The app helps keeping scores of games, rounds and players. There is a very similar web version [here](https://github.com/sevhauser/tichumate).
 
