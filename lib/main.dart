@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flare_splash_screen/flare_splash_screen.dart';
+
 
 import 'package:tichumate/theme.dart';
 import 'package:tichumate/state/database.dart';
@@ -30,17 +30,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'TichuMate',
       theme: TichuMateTheme.dark(),
-      initialRoute: '/init',
+      initialRoute: '/',
       routes: {
-        '/init': (context) => SplashScreen.callback(
-              backgroundColor: Theme.of(context).primaryColor,
-              name: 'assets/splash_logo.flr',
-              width: 300,
-              until: () => Future.delayed(const Duration(seconds: 4)),
-              onSuccess: (_) => Navigator.of(context).pop(),
-              onError: (_, __) {},
-              startAnimation: 'start',
-            ),
         '/': (context) => const HomeView(),
         '/player': (context) => const PlayerView(),
         '/newgame': (context) => const NewGameView(),
