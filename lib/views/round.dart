@@ -196,9 +196,9 @@ class _RoundViewContentState extends State<_RoundViewContent> {
   Widget build(BuildContext context) {
     return PopScope(
         canPop: false,
-        onPopInvoked: (didPop) {
+        onPopInvokedWithResult: (didPop, result) {
           if (didPop) return;
-          _close();
+          _closeDialog();
         },
         child: _loaded
             ? Scaffold(
@@ -231,7 +231,6 @@ class _RoundViewContentState extends State<_RoundViewContent> {
                                   child: Container(
                                 margin: const EdgeInsets.only(top: 12),
                                 child: SliderTheme(
-                                  key: UniqueKey(),
                                   data: SliderTheme.of(context).copyWith(
                                     thumbColor: Colors.amber.shade400,
                                     activeTrackColor: Colors.grey.shade700,
@@ -249,13 +248,15 @@ class _RoundViewContentState extends State<_RoundViewContent> {
                                     min: -7.5,
                                     max: 7.5,
                                     divisions: 30,
-                                    onChanged: _m.hasDoubleWin
-                                        ? null
-                                        : (double value) {
-                                            _m.scoreDistribution =
-                                                (value * 10).toInt();
-                                            setState(() {});
-                                          },
+                                    onChanged: (double value) {
+                                      if (_m.hasDoubleWin) {
+                                        return;
+                                      }
+                                      setState(() {
+                                        _m.scoreDistribution =
+                                            (value * 10).toInt();
+                                      });
+                                    },
                                   ),
                                 ),
                               )),

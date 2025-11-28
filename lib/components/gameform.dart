@@ -69,26 +69,24 @@ class _GameRuleSelect extends FormField<String> {
                   decoration: InputDecoration(
                       labelText: FlutterI18n.translate(
                           context, 'game.rules.win_condition')),
-                  child: Column(
-                    children: <Widget>[
-                      RadioListTile(
-                        activeColor: Colors.amber.shade400,
-                        groupValue: state.value,
-                        title: Text(
-                            FlutterI18n.translate(context, 'game.rules.score')),
-                        value: GameRules.score,
-                        onChanged: (value) => state.didChange(GameRules.score),
-                      ),
-                      RadioListTile(
-                        activeColor: Colors.amber.shade400,
-                        groupValue: state.value,
-                        title: Text(FlutterI18n.translate(
-                            context, 'game.rules.difference')),
-                        value: GameRules.difference,
-                        onChanged: (value) =>
-                            state.didChange(GameRules.difference),
-                      ),
-                    ],
-                  ));
+                  child: RadioGroup<String>(
+                      groupValue: state.value,
+                      onChanged: (value) => state.didChange(value),
+                      child: Column(
+                        children: <Widget>[
+                          RadioListTile(
+                            activeColor: Colors.amber.shade400,
+                            title: Text(FlutterI18n.translate(
+                                context, 'game.rules.score')),
+                            value: GameRules.score,
+                          ),
+                          RadioListTile(
+                            activeColor: Colors.amber.shade400,
+                            title: Text(FlutterI18n.translate(
+                                context, 'game.rules.difference')),
+                            value: GameRules.difference,
+                          ),
+                        ],
+                      )));
             });
 }

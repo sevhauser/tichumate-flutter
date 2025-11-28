@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:tichumate/components/tichumatelogo.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -64,21 +65,44 @@ class SettingsView extends StatelessWidget {
             ]),
           ),
           const Divider(),
-          AboutListTile(
+          const AboutTichumate(),
+        ],
+      ),
+    );
+  }
+}
+
+class AboutTichumate extends StatefulWidget {
+  const AboutTichumate({super.key});
+
+  @override
+  State<AboutTichumate> createState() => _AboutTichumateState();
+}
+
+class _AboutTichumateState extends State<AboutTichumate> {
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: PackageInfo.fromPlatform(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return AboutListTile(
             icon: const Icon(Icons.help),
             applicationIcon: const TichuMateLogo(
               width: 40,
             ),
             applicationVersion: FlutterI18n.translate(
                 context, 'about.version_x',
-                translationParams: {'version': '1.0.0+9'}),
+                translationParams: {'version': snapshot.data!.version}),
             applicationLegalese: 'Copyright 2025 Severin Hauser\n\n'
                 'Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n'
                 'The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\n'
                 'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.',
-          ),
-        ],
-      ),
+          );
+        } else {
+          return const Text('');
+        }
+      },
     );
   }
 }
