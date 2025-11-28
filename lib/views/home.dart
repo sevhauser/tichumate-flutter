@@ -120,9 +120,9 @@ class _HomeViewState extends State<HomeView>
         child: TabBarView(
           controller: _tabController,
           children: <Widget>[
-            _PlayersTab(),
-            _GamesTab(),
-            _CustomizeTab(),
+            _PlayersTab(onRefresh: () => setState(() {})),
+            _GamesTab(onRefresh: () => setState(() {})),
+            _CustomizeTab(onRefresh: () => setState(() {})),
           ],
         ),
       ),
@@ -131,6 +131,10 @@ class _HomeViewState extends State<HomeView>
 }
 
 class _GamesTab extends StatelessWidget {
+  final VoidCallback onRefresh;
+
+  const _GamesTab({required this.onRefresh});
+
   List<Widget> _gamesList(BuildContext context) {
     var list = <Widget>[];
     var dateFormatter = DateFormat.yMMMMd();
@@ -146,8 +150,11 @@ class _GamesTab extends StatelessWidget {
         ));
       }
       list.add(InkWell(
-        onTap: () => Navigator.of(context)
-            .pushNamed('/game', arguments: GameViewArguments(gameId: item.id!)),
+        onTap: () async {
+          await Navigator.of(context).pushNamed('/game',
+              arguments: GameViewArguments(gameId: item.id!));
+          onRefresh();
+        },
         child: GameSummary(
           compact: true,
           slots: <GameHeaderSlot>[
@@ -193,7 +200,10 @@ class _GamesTab extends StatelessWidget {
         heroTag: 'home-new-game',
         label:
             Text(FlutterI18n.translate(context, 'game.new_game').toUpperCase()),
-        onPressed: () => Navigator.pushNamed(context, '/newgame'),
+        onPressed: () async {
+          await Navigator.pushNamed(context, '/newgame');
+          onRefresh();
+        },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
@@ -201,6 +211,10 @@ class _GamesTab extends StatelessWidget {
 }
 
 class _PlayersTab extends StatelessWidget {
+  final VoidCallback onRefresh;
+
+  const _PlayersTab({required this.onRefresh});
+
   List<Widget> _playersList(BuildContext context) {
     var players = HomeData.of(context).players;
     var list = <Widget>[];
@@ -218,8 +232,11 @@ class _PlayersTab extends StatelessWidget {
       list.add(ListTile(
         leading: Text(item.icon, style: const TextStyle(fontSize: 18)),
         title: Text(item.name),
-        onTap: () => Navigator.of(context)
-            .pushNamed('/player', arguments: {'playerId': item.id}),
+        onTap: () async {
+          await Navigator.of(context)
+              .pushNamed('/player', arguments: {'playerId': item.id});
+          onRefresh();
+        },
       ));
     }
     return list;
@@ -245,7 +262,10 @@ class _PlayersTab extends StatelessWidget {
           }),
       floatingActionButton: ExtendedFab(
         heroTag: 'home-new-player',
-        onPressed: () => PlayerDialog(context).newPlayer(),
+        onPressed: () async {
+          await PlayerDialog(context).newPlayer();
+          onRefresh();
+        },
         label: Text(
             FlutterI18n.translate(context, 'player.new_player').toUpperCase()),
       ),
@@ -257,6 +277,10 @@ class _PlayersTab extends StatelessWidget {
 enum _TichuOptions { edit, delete }
 
 class _CustomizeTab extends StatelessWidget {
+  final VoidCallback onRefresh;
+
+  const _CustomizeTab({required this.onRefresh});
+
   void _deleteTichu(BuildContext context, int id) async {
     var result = await TichuDialog(context).deleteTichu(id);
     if (!context.mounted) return;
@@ -265,6 +289,7 @@ class _CustomizeTab extends StatelessWidget {
         content: Text(FlutterI18n.translate(context, 'tichu.tichu_deleted')),
         duration: const Duration(seconds: 1),
       ));
+      onRefresh();
     }
   }
 
@@ -284,9 +309,10 @@ class _CustomizeTab extends StatelessWidget {
         trailing: item.protected
             ? const Text('')
             : PopupMenuButton(
-                onSelected: (_TichuOptions result) {
+                onSelected: (_TichuOptions result) async {
                   if (result == _TichuOptions.edit) {
-                    TichuDialog(context).editTichu(item.id!);
+                    await TichuDialog(context).editTichu(item.id!);
+                    onRefresh();
                   } else if (result == _TichuOptions.delete) {
                     _deleteTichu(context, item.id!);
                   }
@@ -318,7 +344,10 @@ class _CustomizeTab extends StatelessWidget {
       ),
       floatingActionButton: ExtendedFab(
         heroTag: 'home-new-tichu',
-        onPressed: () => TichuDialog(context).createTichu(),
+        onPressed: () async {
+          await TichuDialog(context).createTichu();
+          onRefresh();
+        },
         label: Text(
             FlutterI18n.translate(context, 'tichu.new_tichu').toUpperCase()),
       ),
